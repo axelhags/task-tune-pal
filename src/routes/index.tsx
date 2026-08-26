@@ -76,7 +76,7 @@ function Index() {
         setLeft(0);
       } else {
         setPhase("focus");
-        setLeft(tasks[n].minutes * 60);
+        setLeft((tasks[n]?.minutes ?? 25) * 60);
       }
       return n;
     });
@@ -118,7 +118,7 @@ function Index() {
     if (!tasks.length) return;
     setIndex(0);
     setPhase("focus");
-    setLeft(tasks[0].minutes * 60);
+    setLeft((tasks[0]?.minutes ?? 25) * 60);
     buzz([300]);
   };
 
