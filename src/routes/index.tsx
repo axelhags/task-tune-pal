@@ -5,17 +5,17 @@ import { Lock, Unlock, Plus, X, Play, SkipForward, Coffee, RotateCcw } from "luc
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "LockIn — Focus Lock & Task Switcher" },
+      { title: "Locked In — Focus Lock & Task Switcher" },
       {
         name: "description",
         content:
           "Plan your tasks, lock your phone into focus mode, and get told exactly when to switch task or take a break. The screen unlocks on breaks.",
       },
-      { property: "og:title", content: "LockIn — Focus Lock & Task Switcher" },
+      { property: "og:title", content: "Locked In — Focus Lock & Task Switcher" },
       {
         property: "og:description",
         content:
-          "Lock your phone into a focus session. LockIn tells you when to switch tasks and unlocks when it's break time.",
+          "Lock your phone into a focus session. Locked In tells you when to switch tasks and unlocks when it's break time.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
 type Task = { id: string; title: string; minutes: number };
 type Phase = "plan" | "focus" | "break" | "done";
 
-const STORAGE_KEY = "lockin.tasks.v1";
+const STORAGE_KEY = "lockedin.tasks.v1";
 const BREAK_MINUTES = 5;
 
 const fmt = (s: number) =>
@@ -228,7 +228,7 @@ function Index() {
     <main className="mx-auto min-h-screen w-full max-w-md px-6 py-12">
       <header>
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-          <Lock className="size-3.5" /> LockIn
+          <Lock className="size-3.5" /> Locked In
         </div>
         <h1 className="mt-4 text-4xl font-bold leading-tight">
           Lock your phone.
@@ -236,7 +236,7 @@ function Index() {
           Work the list.
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Add what you need to do. LockIn holds a full-screen lock while you focus, tells you when to
+          Add what you need to do. Locked In holds a full-screen lock while you focus, tells you when to
           switch, and unlocks on every break.
         </p>
       </header>
