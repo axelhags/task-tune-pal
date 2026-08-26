@@ -104,6 +104,27 @@ function Index() {
     }
   }, [left, phase, startBreak, nextTask]);
 
+  // Keep the screen awake while locked into a task (supported browsers).
+  useEffect(() => {
+    if (phase !== "focus") return;
+    let sentinel: { release: () => Promise<void> } | null = null;
+    let cancelled = false;
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
+    };
+    nav.wakeLock
+      ?.request("screen")
+      .then((s) => {
+        if (cancelled) void s.release();
+        else sentinel = s;
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      void sentinel?.release().catch(() => undefined);
+    };
+  }, [phase]);
+
   const addTask = () => {
     const t = title.trim();
     if (!t) return;
@@ -238,6 +259,9 @@ function Index() {
         <p className="mt-3 text-sm text-muted-foreground">
           Add what you need to do. Locked In holds a full-screen lock while you focus, tells you when to
           switch, and unlocks on every break.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Tip: add Locked In to your home screen to run it full-screen like a native app.
         </p>
       </header>
 
