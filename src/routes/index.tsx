@@ -15,6 +15,7 @@ import {
   Send,
   Loader2,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { askCoach } from "@/lib/coach.functions";
 
 export const Route = createFileRoute("/")({
