@@ -29,15 +29,20 @@ export const askCoach = createServerFn({ method: "POST" })
       data.currentTask ? `The user's current task is: "${data.currentTask}".` : "",
     ].join(" ");
 
+    // Gemini rejects a history that ends on an assistant turn.
+    const history = [...data.messages];
+    while (history.length && history[history.length - 1]?.role !== "user") history.pop();
+    if (!history.length) return { reply: "Ask me a question and I'll help." };
+
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        "Lovable-API-Key": apiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "system", content: system }, ...data.messages],
+        model: "google/gemini-3.7-flash",
+        messages: [{ role: "system", content: system }, ...history],
       }),
     });
 
