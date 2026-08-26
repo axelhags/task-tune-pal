@@ -494,7 +494,7 @@ function LockTab({
   );
 }
 
-function CoachTab({ currentTask }: { currentTask?: string }) {
+function CoachTab({ currentTask }: { currentTask?: string | undefined }) {
   const ask = useServerFn(askCoach);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
