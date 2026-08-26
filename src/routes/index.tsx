@@ -554,7 +554,13 @@ function CoachTab({ currentTask }: { currentTask?: string | undefined }) {
                 : "border border-border bg-card"
             }`}
           >
-            {m.content}
+            {m.role === "assistant" ? (
+              <div className="space-y-2 [&_a]:underline [&_li]:ml-4 [&_li]:list-disc [&_strong]:font-semibold">
+                <ReactMarkdown>{m.content}</ReactMarkdown>
+              </div>
+            ) : (
+              m.content
+            )}
           </div>
         ))}
         {loading && (
