@@ -5,17 +5,17 @@ import { Lock, Unlock, Plus, X, Play, SkipForward, Coffee, RotateCcw } from "luc
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "LockIn — Focus Lock & Task Switcher" },
+      { title: "Locked In — Focus Lock & Task Switcher" },
       {
         name: "description",
         content:
           "Plan your tasks, lock your phone into focus mode, and get told exactly when to switch task or take a break. The screen unlocks on breaks.",
       },
-      { property: "og:title", content: "LockIn — Focus Lock & Task Switcher" },
+      { property: "og:title", content: "Locked In — Focus Lock & Task Switcher" },
       {
         property: "og:description",
         content:
-          "Lock your phone into a focus session. LockIn tells you when to switch tasks and unlocks when it's break time.",
+          "Lock your phone into a focus session. Locked In tells you when to switch tasks and unlocks when it's break time.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
 type Task = { id: string; title: string; minutes: number };
 type Phase = "plan" | "focus" | "break" | "done";
 
-const STORAGE_KEY = "lockin.tasks.v1";
+const STORAGE_KEY = "lockedin.tasks.v1";
 const BREAK_MINUTES = 5;
 
 const fmt = (s: number) =>
@@ -103,6 +103,27 @@ function Index() {
       nextTask();
     }
   }, [left, phase, startBreak, nextTask]);
+
+  // Keep the screen awake while locked into a task (supported browsers).
+  useEffect(() => {
+    if (phase !== "focus") return;
+    let sentinel: { release: () => Promise<void> } | null = null;
+    let cancelled = false;
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
+    };
+    nav.wakeLock
+      ?.request("screen")
+      .then((s) => {
+        if (cancelled) void s.release();
+        else sentinel = s;
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      void sentinel?.release().catch(() => undefined);
+    };
+  }, [phase]);
 
   const addTask = () => {
     const t = title.trim();
@@ -228,7 +249,7 @@ function Index() {
     <main className="mx-auto min-h-screen w-full max-w-md px-6 py-12">
       <header>
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-          <Lock className="size-3.5" /> LockIn
+          <Lock className="size-3.5" /> Locked In
         </div>
         <h1 className="mt-4 text-4xl font-bold leading-tight">
           Lock your phone.
@@ -236,8 +257,11 @@ function Index() {
           Work the list.
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Add what you need to do. LockIn holds a full-screen lock while you focus, tells you when to
+          Add what you need to do. Locked In holds a full-screen lock while you focus, tells you when to
           switch, and unlocks on every break.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Tip: add Locked In to your home screen to run it full-screen like a native app.
         </p>
       </header>
 
