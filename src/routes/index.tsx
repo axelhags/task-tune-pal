@@ -207,7 +207,8 @@ function Index() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-between bg-gradient-focus px-6 py-14 text-center">
         <div className="flex items-center gap-2 rounded-full border border-lock/40 bg-lock/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lock">
-          <Lock className="size-3.5" /> Phone locked
+          <Lock className="size-3.5" />
+          {shield === "shielding" ? "Apps blocked" : "Phone locked"}
         </div>
 
         <div className="w-full">
