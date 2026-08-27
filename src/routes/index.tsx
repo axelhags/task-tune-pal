@@ -159,6 +159,20 @@ function Index() {
     };
   }, [phase]);
 
+  // Block other apps through iOS Screen Time while focusing (native shell only).
+  const task = tasks[index];
+  useEffect(() => {
+    if (shield === "unsupported" || shield === "unauthorized") return;
+    if (phase === "focus" && task) {
+      void startShielding(task.title, task.minutes * 60).then((ok) => {
+        if (ok) setShield("shielding");
+      });
+    } else {
+      void stopShielding().then(() => setShield((s) => (s === "shielding" ? "ready" : s)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, index, task?.id]);
+
   const addTask = () => {
     const t = title.trim();
     if (!t) return;
