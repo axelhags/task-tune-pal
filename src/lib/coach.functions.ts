@@ -3,6 +3,11 @@ import { z } from "zod";
 
 const schema = z.object({
   currentTask: z.string().max(200).optional(),
+  nextTask: z.string().max(200).optional(),
+  phase: z.enum(["idle", "focus", "break", "done"]).optional(),
+  secondsLeft: z.number().int().min(0).max(60 * 60 * 12).optional(),
+  taskNumber: z.number().int().min(0).max(500).optional(),
+  taskCount: z.number().int().min(0).max(500).optional(),
   messages: z
     .array(
       z.object({
@@ -14,11 +19,30 @@ const schema = z.object({
     .max(30),
 });
 
+const mmss = (s: number) =>
+  `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} sec`;
+
 export const askCoach = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => schema.parse(data))
   .handler(async ({ data }) => {
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) return { reply: "The study coach isn't configured yet." };
+
+    const ctx: string[] = [];
+    if (data.currentTask) ctx.push(`Current task: "${data.currentTask}".`);
+    if (data.taskNumber && data.taskCount)
+      ctx.push(`It is task ${data.taskNumber} of ${data.taskCount} in this session.`);
+    if (data.phase === "focus")
+      ctx.push(
+        `The user is LOCKED IN on this task right now, with ${mmss(data.secondsLeft ?? 0)} left before the break.`,
+      );
+    else if (data.phase === "break")
+      ctx.push(
+        `The user is on a break with ${mmss(data.secondsLeft ?? 0)} left; the phone is unlocked.`,
+      );
+    else if (data.phase === "done") ctx.push("The session is finished.");
+    else ctx.push("No session is running yet — they are still planning.");
+    if (data.nextTask) ctx.push(`Next up afterwards: "${data.nextTask}".`);
 
     const system = [
       "You are the study coach inside 'Locked In', a focus app.",
@@ -26,7 +50,9 @@ export const askCoach = createServerFn({ method: "POST" })
       "answer study questions clearly, or give practical steps for household chores.",
       "Be concise (under 150 words unless asked for more), concrete and encouraging.",
       "Never tell the user to abandon their session; keep them focused.",
-      data.currentTask ? `The user's current task is: "${data.currentTask}".` : "",
+      "Use the live session context below: tailor answers to the current task, and if little",
+      "time is left, scope your advice to what fits in the remaining minutes.",
+      "SESSION CONTEXT — " + ctx.join(" "),
     ].join(" ");
 
     // Gemini rejects a history that ends on an assistant turn.
