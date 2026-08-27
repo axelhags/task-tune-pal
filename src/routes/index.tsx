@@ -274,9 +274,20 @@ function Index() {
             nextTask={nextTask}
             reset={reset}
             goPlan={() => setTab("plan")}
+            shield={shield}
+            enableShield={() => void enableShield()}
           />
         )}
-        {tab === "coach" && <CoachTab currentTask={current?.title} />}
+        {tab === "coach" && (
+          <CoachTab
+            currentTask={current?.title}
+            nextTask={tasks[index + 1]?.title}
+            phase={phase}
+            secondsLeft={left}
+            taskNumber={tasks.length ? index + 1 : 0}
+            taskCount={tasks.length}
+          />
+        )}
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 mx-auto w-full max-w-md border-t border-border bg-card/95 backdrop-blur">
