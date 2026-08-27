@@ -426,6 +426,8 @@ function LockTab({
   nextTask,
   reset,
   goPlan,
+  shield,
+  enableShield,
 }: {
   tasks: Task[];
   phase: Phase;
@@ -436,6 +438,8 @@ function LockTab({
   nextTask: () => void;
   reset: () => void;
   goPlan: () => void;
+  shield: ShieldStatus;
+  enableShield: () => void;
 }) {
   const next = tasks[index + 1];
   return (
@@ -446,6 +450,41 @@ function LockTab({
         </div>
         <h1 className="mt-4 text-4xl font-bold leading-tight">Your schedule</h1>
       </header>
+
+      <section className="mt-6 rounded-3xl border border-border bg-card p-5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          <ShieldIcon className="size-3.5" /> App blocking
+        </div>
+        {shield === "unsupported" && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Screen Time blocking needs the iOS app build. Here in the browser, Lock Mode still takes
+            over the screen with a full-screen countdown.
+          </p>
+        )}
+        {shield === "unauthorized" && (
+          <>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Allow Screen Time so Locked In can block your other apps during focus.
+            </p>
+            <button
+              onClick={enableShield}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-semibold text-primary-foreground active:scale-95"
+            >
+              <ShieldIcon className="size-4" /> Allow Screen Time
+            </button>
+          </>
+        )}
+        {shield === "ready" && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Screen Time is allowed. Your other apps get blocked automatically the moment a task
+            starts, and unblocked on every break.
+          </p>
+        )}
+        {shield === "shielding" && (
+          <p className="mt-3 text-sm text-primary">Other apps are blocked right now.</p>
+        )}
+      </section>
+
 
       {phase === "break" && (
         <section className="mt-6 rounded-3xl bg-gradient-break p-6 text-center text-primary-foreground">
