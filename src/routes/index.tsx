@@ -643,7 +643,14 @@ function CoachTab({
             ? `Answering questions about “${currentTask}” — or anything else you're working on.`
             : "Ask about your studies or how to tackle a chore."}
         </p>
+        {(phase === "focus" || phase === "break") && (
+          <p className="tabular mt-2 text-xs uppercase tracking-[0.2em] text-primary">
+            {phase === "focus" ? "Focusing" : "On break"} · {fmt(secondsLeft)} left · task{" "}
+            {taskNumber}/{taskCount}
+          </p>
+        )}
       </header>
+
 
       <div className="mt-6 space-y-3">
         {!messages.length && (
