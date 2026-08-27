@@ -609,7 +609,17 @@ function CoachTab({
     setInput("");
     setLoading(true);
     try {
-      const res = await ask({ data: { currentTask, messages: next.slice(-20) } });
+      const res = await ask({
+        data: {
+          currentTask,
+          nextTask,
+          phase,
+          secondsLeft: Math.max(0, Math.round(secondsLeft)),
+          taskNumber,
+          taskCount,
+          messages: next.slice(-20),
+        },
+      });
       setMessages([...next, { role: "assistant", content: res.reply }]);
     } catch {
       setMessages([
