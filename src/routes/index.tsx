@@ -14,9 +14,17 @@ import {
   Sparkles,
   Send,
   Loader2,
+  ShieldCheck as ShieldIcon,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { askCoach } from "@/lib/coach.functions";
+import {
+  detectScreenTime,
+  requestScreenTime,
+  startShielding,
+  stopShielding,
+  type ShieldStatus,
+} from "@/lib/screen-time";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,6 +69,14 @@ function Index() {
   const [left, setLeft] = useState(0);
   const [hydrated, setHydrated] = useState(false);
   const fired = useRef(false);
+  const [shield, setShield] = useState<ShieldStatus>("unsupported");
+
+  useEffect(() => {
+    void detectScreenTime().then(setShield);
+  }, []);
+
+  const enableShield = async () => setShield(await requestScreenTime());
+
 
   useEffect(() => {
     setHydrated(true);
@@ -144,6 +160,20 @@ function Index() {
     };
   }, [phase]);
 
+  // Block other apps through iOS Screen Time while focusing (native shell only).
+  const task = tasks[index];
+  useEffect(() => {
+    if (shield === "unsupported" || shield === "unauthorized") return;
+    if (phase === "focus" && task) {
+      void startShielding(task.title, task.minutes * 60).then((ok) => {
+        if (ok) setShield("shielding");
+      });
+    } else {
+      void stopShielding().then(() => setShield((s) => (s === "shielding" ? "ready" : s)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, index, task?.id]);
+
   const addTask = () => {
     const t = title.trim();
     if (!t) return;
@@ -178,7 +208,8 @@ function Index() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-between bg-gradient-focus px-6 py-14 text-center">
         <div className="flex items-center gap-2 rounded-full border border-lock/40 bg-lock/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-lock">
-          <Lock className="size-3.5" /> Phone locked
+          <Lock className="size-3.5" />
+          {shield === "shielding" ? "Apps blocked" : "Phone locked"}
         </div>
 
         <div className="w-full">
@@ -244,9 +275,20 @@ function Index() {
             nextTask={nextTask}
             reset={reset}
             goPlan={() => setTab("plan")}
+            shield={shield}
+            enableShield={() => void enableShield()}
           />
         )}
-        {tab === "coach" && <CoachTab currentTask={current?.title} />}
+        {tab === "coach" && (
+          <CoachTab
+            currentTask={current?.title}
+            nextTask={tasks[index + 1]?.title}
+            phase={phase}
+            secondsLeft={left}
+            taskNumber={tasks.length ? index + 1 : 0}
+            taskCount={tasks.length}
+          />
+        )}
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 mx-auto w-full max-w-md border-t border-border bg-card/95 backdrop-blur">
@@ -385,6 +427,8 @@ function LockTab({
   nextTask,
   reset,
   goPlan,
+  shield,
+  enableShield,
 }: {
   tasks: Task[];
   phase: Phase;
@@ -395,6 +439,8 @@ function LockTab({
   nextTask: () => void;
   reset: () => void;
   goPlan: () => void;
+  shield: ShieldStatus;
+  enableShield: () => void;
 }) {
   const next = tasks[index + 1];
   return (
@@ -405,6 +451,41 @@ function LockTab({
         </div>
         <h1 className="mt-4 text-4xl font-bold leading-tight">Your schedule</h1>
       </header>
+
+      <section className="mt-6 rounded-3xl border border-border bg-card p-5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          <ShieldIcon className="size-3.5" /> App blocking
+        </div>
+        {shield === "unsupported" && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Screen Time blocking needs the iOS app build. Here in the browser, Lock Mode still takes
+            over the screen with a full-screen countdown.
+          </p>
+        )}
+        {shield === "unauthorized" && (
+          <>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Allow Screen Time so Locked In can block your other apps during focus.
+            </p>
+            <button
+              onClick={enableShield}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-semibold text-primary-foreground active:scale-95"
+            >
+              <ShieldIcon className="size-4" /> Allow Screen Time
+            </button>
+          </>
+        )}
+        {shield === "ready" && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Screen Time is allowed. Your other apps get blocked automatically the moment a task
+            starts, and unblocked on every break.
+          </p>
+        )}
+        {shield === "shielding" && (
+          <p className="mt-3 text-sm text-primary">Other apps are blocked right now.</p>
+        )}
+      </section>
+
 
       {phase === "break" && (
         <section className="mt-6 rounded-3xl bg-gradient-break p-6 text-center text-primary-foreground">
@@ -495,7 +576,21 @@ function LockTab({
   );
 }
 
-function CoachTab({ currentTask }: { currentTask?: string | undefined }) {
+function CoachTab({
+  currentTask,
+  nextTask,
+  phase,
+  secondsLeft,
+  taskNumber,
+  taskCount,
+}: {
+  currentTask?: string | undefined;
+  nextTask?: string | undefined;
+  phase: Phase;
+  secondsLeft: number;
+  taskNumber: number;
+  taskCount: number;
+}) {
   const ask = useServerFn(askCoach);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -514,7 +609,17 @@ function CoachTab({ currentTask }: { currentTask?: string | undefined }) {
     setInput("");
     setLoading(true);
     try {
-      const res = await ask({ data: { currentTask, messages: next.slice(-20) } });
+      const res = await ask({
+        data: {
+          currentTask,
+          nextTask,
+          phase,
+          secondsLeft: Math.max(0, Math.round(secondsLeft)),
+          taskNumber,
+          taskCount,
+          messages: next.slice(-20),
+        },
+      });
       setMessages([...next, { role: "assistant", content: res.reply }]);
     } catch {
       setMessages([
@@ -538,7 +643,14 @@ function CoachTab({ currentTask }: { currentTask?: string | undefined }) {
             ? `Answering questions about “${currentTask}” — or anything else you're working on.`
             : "Ask about your studies or how to tackle a chore."}
         </p>
+        {(phase === "focus" || phase === "break") && (
+          <p className="tabular mt-2 text-xs uppercase tracking-[0.2em] text-primary">
+            {phase === "focus" ? "Focusing" : "On break"} · {fmt(secondsLeft)} left · task{" "}
+            {taskNumber}/{taskCount}
+          </p>
+        )}
       </header>
+
 
       <div className="mt-6 space-y-3">
         {!messages.length && (
