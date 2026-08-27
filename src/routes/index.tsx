@@ -68,6 +68,14 @@ function Index() {
   const [left, setLeft] = useState(0);
   const [hydrated, setHydrated] = useState(false);
   const fired = useRef(false);
+  const [shield, setShield] = useState<ShieldStatus>("unsupported");
+
+  useEffect(() => {
+    void detectScreenTime().then(setShield);
+  }, []);
+
+  const enableShield = async () => setShield(await requestScreenTime());
+
 
   useEffect(() => {
     setHydrated(true);
