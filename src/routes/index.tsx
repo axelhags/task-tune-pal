@@ -576,7 +576,21 @@ function LockTab({
   );
 }
 
-function CoachTab({ currentTask }: { currentTask?: string | undefined }) {
+function CoachTab({
+  currentTask,
+  nextTask,
+  phase,
+  secondsLeft,
+  taskNumber,
+  taskCount,
+}: {
+  currentTask?: string | undefined;
+  nextTask?: string | undefined;
+  phase: Phase;
+  secondsLeft: number;
+  taskNumber: number;
+  taskCount: number;
+}) {
   const ask = useServerFn(askCoach);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
