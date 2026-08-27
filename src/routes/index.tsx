@@ -14,6 +14,7 @@ import {
   Sparkles,
   Send,
   Loader2,
+  ShieldCheck as ShieldIcon,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { askCoach } from "@/lib/coach.functions";
