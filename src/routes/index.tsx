@@ -17,6 +17,13 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { askCoach } from "@/lib/coach.functions";
+import {
+  detectScreenTime,
+  requestScreenTime,
+  startShielding,
+  stopShielding,
+  type ShieldStatus,
+} from "@/lib/screen-time";
 
 export const Route = createFileRoute("/")({
   head: () => ({
